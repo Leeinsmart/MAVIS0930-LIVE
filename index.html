@@ -64,6 +64,12 @@ main{max-width:var(--shell);margin:0 auto;padding:12px var(--pad) 0}
 .band{padding:12px var(--pad);display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap}
 .band .t{font-size:var(--f-time);font-weight:800;line-height:1.1}
 .band .left{font-size:var(--f-small);font-weight:700;color:var(--ink2)}
+.band .right{display:flex;align-items:center;gap:10px;margin-left:auto}
+.tmr{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:50%;
+  border:1.5px solid var(--ink);color:var(--ink);background:rgba(255,255,255,.08)}
+.tmr:active{background:rgba(255,255,255,.2)}
+.tmr svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.tnote{font-size:var(--f-tiny);color:var(--ink2)}
 .build .band{background:var(--t-build)}.morning .band{background:var(--t-morning)}
 .stage .band{background:var(--t-stage)}.after .band{background:var(--t-after)}.evening .band{background:var(--t-evening)}
 .stagename{padding:12px var(--pad) 0;font-size:var(--f-stage);font-weight:800;line-height:1.3}
@@ -219,6 +225,25 @@ function leftText(s) {
   if (m >= s.b) return '已過';
   return `還有 ${s.b - m} 分鐘`;
 }
+// 計時器：這一段還沒開始就算到開始、進行中就算到結束，按下時才算，不用畫面上的舊數字
+function timerMinutes(s) { const m = nowMin(); if (m < s.a) return s.a - m; if (m < s.b) return s.b - m; return 0; }
+function timerHref(min, label) {
+  const ua = navigator.userAgent;
+  if (/Android/i.test(ua)) {
+    // 系統時鐘的「設定計時器」intent，SKIP_UI 直接起跑（Android 4.4 起）
+    return `intent:#Intent;action=android.intent.action.SET_TIMER;i.android.intent.extra.alarm.LENGTH=${min * 60};S.android.intent.extra.alarm.MESSAGE=${encodeURIComponent(label)};B.android.intent.extra.alarm.SKIP_UI=true;end`;
+  }
+  if (/iPhone|iPad|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) {
+    // iOS 網頁開不了時鐘 app，走捷徑：手機上要先建一個叫「計時」的捷徑（收到文字→開始計時 N 分鐘），跑完回到這一頁
+    return `shortcuts://x-callback-url/run-shortcut?name=${encodeURIComponent('計時')}&input=text&text=${min}&x-success=${encodeURIComponent(location.href)}`;
+  }
+  return null;
+}
+const TIMER_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M9 2h6M12 2v3"/></svg>';
+function timerBtn(s) {
+  const min = timerMinutes(s);
+  return min > 0 ? `<button type="button" class="tmr" data-slot="${s.i}" aria-label="設 ${min} 分鐘計時">${TIMER_ICON}</button>` : '';
+}
 function renderNow() {
   const el = $('#now');
   const st = dayState();
@@ -240,7 +265,7 @@ function renderNow() {
   } else {
     const s = S[idx];
     const acts = s.acts.length ? `<ul class="acts">${s.acts.map(a => actLi(a, s)).join('')}</ul>` : `<div class="empty">這一段沒有單位有安排。</div>`;
-    body = `<div class="card ${atLive ? 'cur' : ''} ${s.tone}"><div class="band"><div class="t num">${rng(s.start, s.end)}</div><div class="left">${leftText(s)}</div></div>${stageBlock(s.stage)}${acts}</div>`;
+    body = `<div class="card ${atLive ? 'cur' : ''} ${s.tone}"><div class="band"><div class="t num">${rng(s.start, s.end)}</div><div class="right"><div class="left">${leftText(s)}</div>${st === 'live' ? timerBtn(s) : ''}</div></div>${stageBlock(s.stage)}${acts}</div>`;
   }
   // 接下來：後面三段裡「這一段才開始」的活動
   let nexts = '';
@@ -263,6 +288,13 @@ function renderNow() {
       cursor = Math.max(0, Math.min(S.length - 1, base)); followLive = false;
     }
     renderNow(); window.scrollTo({top: 0});
+  }));
+  el.querySelectorAll('.tmr').forEach(b => b.addEventListener('click', () => {
+    const s = S[+b.dataset.slot]; const min = timerMinutes(s);
+    if (min <= 0) { renderNow(); return; }                      // 畫面上的數字過期了，重畫就好
+    const href = timerHref(min, `0930 ${nowMin() < s.a ? s.start + ' 開始' : s.end + ' 結束'}`);
+    if (!href) { if (!b.nextElementSibling) b.insertAdjacentHTML('afterend', '<span class="tnote">手機上才能設計時</span>'); return; }
+    location.href = href;
   }));
 }
 function renderDay() {
