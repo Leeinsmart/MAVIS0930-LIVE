@@ -61,11 +61,11 @@ main{max-width:var(--shell);margin:0 auto;padding:12px var(--pad) 0}
 .nav button.back{color:var(--red);border-color:var(--red)}
 .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;margin-bottom:12px}
 .card.cur{border-color:var(--now);box-shadow:0 0 0 2px var(--now) inset}
-.band{padding:12px var(--pad);display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap}
-.band .t{font-size:var(--f-time);font-weight:800;line-height:1.1}
-.band .left{font-size:var(--f-small);font-weight:700;color:var(--ink2)}
-.band .right{display:flex;align-items:center;gap:10px;margin-left:auto}
-.tmr{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:50%;
+/* 色帶：左欄時段在上、倒數在下；右欄放計時器圖示，跨兩列置中 */
+.band{padding:12px var(--pad);display:grid;grid-template-columns:1fr auto;align-items:center;column-gap:12px}
+.band .t{grid-column:1;font-size:var(--f-time);font-weight:800;line-height:1.1}
+.band .left{grid-column:1;font-size:var(--f-small);font-weight:700;color:var(--ink);opacity:.8;margin-top:4px}
+.tmr{grid-column:2;grid-row:1 / span 2;display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:50%;
   border:1.5px solid var(--ink);color:var(--ink);background:rgba(255,255,255,.08)}
 .tmr:active{background:rgba(255,255,255,.2)}
 .tmr svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
@@ -104,7 +104,7 @@ main{max-width:var(--shell);margin:0 auto;padding:12px var(--pad) 0}
 .empty{padding:16px var(--pad);color:var(--ink2);font-size:var(--f-body)}
 h2{font-size:var(--f-h);font-weight:800;margin:18px 0 8px}
 .next .band .t{font-size:var(--f-h)}
-.next .band .in{font-size:var(--f-small);font-weight:700;color:var(--ink2)}
+.next .band .in{grid-column:1 / -1;margin-top:2px;font-size:var(--f-small);font-weight:700;color:var(--ink);opacity:.8}
 .starts{list-style:none;padding:4px 0 6px}
 .starts li{padding:6px var(--pad);font-size:var(--f-body);display:flex;gap:8px;align-items:baseline}
 .starts .un{flex:none;font-size:var(--f-tiny);font-weight:700;color:var(--ink3);min-width:5.5em}
@@ -265,7 +265,7 @@ function renderNow() {
   } else {
     const s = S[idx];
     const acts = s.acts.length ? `<ul class="acts">${s.acts.map(a => actLi(a, s)).join('')}</ul>` : `<div class="empty">這一段沒有單位有安排。</div>`;
-    body = `<div class="card ${atLive ? 'cur' : ''} ${s.tone}"><div class="band"><div class="t num">${rng(s.start, s.end)}</div><div class="right"><div class="left">${leftText(s)}</div>${st === 'live' ? timerBtn(s) : ''}</div></div>${stageBlock(s.stage)}${acts}</div>`;
+    body = `<div class="card ${atLive ? 'cur' : ''} ${s.tone}"><div class="band"><div class="t num">${rng(s.start, s.end)}</div>${leftText(s) ? `<div class="left">${leftText(s)}</div>` : ''}${st === 'live' ? timerBtn(s) : ''}</div>${stageBlock(s.stage)}${acts}</div>`;
   }
   // 接下來：後面三段裡「這一段才開始」的活動
   let nexts = '';
@@ -275,7 +275,7 @@ function renderNow() {
     nexts = '<h2>接下來</h2>' + list.map(s => {
       const starts = s.acts.filter(a => !a.cont);
       const items = starts.map(a => `<li><span class="un">${esc(a.unit)}</span><span class="st">${esc(a.title)}${a.sub ? ` <span class="su">${esc(a.sub)}</span>` : ''}</span></li>`).join('');
-      return `<div class="card next ${s.tone}"><div class="band"><div class="t num">${rng(s.start, s.end)}</div><div class="in">${s.stage ? '流程 '+s.stage.no+'　'+esc(s.stage.name) : (starts.length ? '' : '延續中，沒有新的事')}</div></div>${items ? `<ul class="starts">${items}</ul>` : ''}</div>`;
+      return `<div class="card next ${s.tone}"><div class="band"><div class="t num">${rng(s.start, s.end)}</div>${(t => t ? `<div class="in">${t}</div>` : '')(s.stage ? '流程 '+s.stage.no+'　'+esc(s.stage.name) : (starts.length ? '' : '延續中，沒有新的事'))}</div>${items ? `<ul class="starts">${items}</ul>` : ''}</div>`;
     }).join('');
   }
   el.innerHTML = dayNote + head + body + nexts;
