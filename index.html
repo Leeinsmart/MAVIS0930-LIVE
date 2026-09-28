@@ -65,10 +65,12 @@ main{max-width:var(--shell);margin:0 auto;padding:12px var(--pad) 0}
 .band{padding:12px var(--pad);display:grid;grid-template-columns:1fr auto;align-items:center;column-gap:12px}
 .band .t{grid-column:1;font-size:var(--f-time);font-weight:800;line-height:1.1}
 .band .left{grid-column:1;font-size:var(--f-small);font-weight:700;color:var(--ink);opacity:.8;margin-top:4px}
-.tmr{grid-column:2;grid-row:1 / span 2;display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:50%;
-  border:1.5px solid var(--ink);color:var(--ink);background:rgba(255,255,255,.08)}
+/* 圖示跟時段字同高（Lee 2026-09-28）：圓圈 31px＝字級 28px×行高 1.1，對齊第一列；可點範圍用偽元素外擴到 47px */
+.tmr{grid-column:2;grid-row:1;align-self:center;position:relative;display:inline-flex;align-items:center;justify-content:center;
+  width:31px;height:31px;border-radius:50%;border:1.5px solid var(--ink);color:var(--ink);background:rgba(255,255,255,.08)}
+.tmr::before{content:"";position:absolute;inset:-8px;border-radius:50%}
 .tmr:active{background:rgba(255,255,255,.2)}
-.tmr svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.tmr svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 /* 頁面內倒數：紅底佔畫面上半，頁首與內容往下讓位 */
 .cd{display:none;position:fixed;top:0;left:0;right:0;height:50vh;z-index:60;background:#c8102e;color:#fff;
   padding:calc(12px + env(safe-area-inset-top)) var(--pad) 12px;text-align:center}
