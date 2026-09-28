@@ -315,7 +315,7 @@ function renderNow() {
   } else {
     const s = S[idx];
     const acts = s.acts.length ? `<ul class="acts">${s.acts.map(a => actLi(a, s)).join('')}</ul>` : `<div class="empty">這一段沒有單位有安排。</div>`;
-    body = `<div class="card ${atLive ? 'cur' : ''} ${s.tone}"><div class="band"><div class="t num">${rng(s.start, s.end)}</div>${leftText(s) ? `<div class="left">${leftText(s)}</div>` : ''}${st === 'live' ? timerBtn(s) : ''}</div>${stageBlock(s.stage)}${acts}</div>`;
+    body = `<div class="card ${atLive ? 'cur' : ''} ${s.tone}"><div class="band"><div class="t num">${rng(s.start, s.end)}</div>${leftText(s) ? `<div class="left">${leftText(s)}</div>` : ''}${timerBtn(s)}</div>${stageBlock(s.stage)}${acts}</div>`;
   }
   // 接下來：後面三段裡「這一段才開始」的活動
   let nexts = '';
